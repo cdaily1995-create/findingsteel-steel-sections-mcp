@@ -5,3 +5,4 @@ dist/
 .DS_Store
 
 dist/findingsteel-steel-sections-mcp.mjs
+_registry_ref/
