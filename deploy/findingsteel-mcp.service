@@ -1,0 +1,24 @@
+[Unit]
+Description=FindingSteel Steel Sections MCP Server (Streamable HTTP)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/findingsteel-mcp
+Environment=NODE_ENV=production
+Environment=PORT=3001
+Environment=MCP_BASE_PATH=/mcp
+ExecStart=/usr/bin/node /opt/findingsteel-mcp/findingsteel-steel-sections-mcp.mjs
+Restart=always
+RestartSec=3
+# 常规安全加固
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

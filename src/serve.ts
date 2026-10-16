@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /**
  * FindingSteel Steel Sections MCP Server — Streamable HTTP entry
- * Usage: node src/serve.ts [--port 3001]
- * Endpoint: http://localhost:3001/mcp
+ * Usage:
+ *   node src/serve.ts                          # base path /mcp, port 3001
+ *   MCP_BASE_PATH=/mcp/sections PORT=3001 node src/serve.ts
  *
+ * Endpoint: http://localhost:<PORT><MCP_BASE_PATH>
  * Standard implementation: one StreamableHTTPServerTransport per MCP session,
  * keyed by Mcp-Session-Id (per SDK docs). Used for remote deployment and
  * directory-listing verification.
@@ -15,6 +17,8 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { createServer } from './server/index.ts';
 
 const PORT = Number(process.env.PORT ?? 3001);
+// 允许部署时把端点挂在指定路径下（nginx 反代场景），如 /mcp/sections
+const BASE_PATH = (process.env.MCP_BASE_PATH ?? '/mcp').replace(/\/+$/, '') || '/mcp';
 
 // One transport per session (stateful), as recommended by the SDK docs.
 const transports = new Map();
@@ -22,9 +26,10 @@ const transports = new Map();
 async function main() {
   const httpServer = createHttpServer(async (req, res) => {
     const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
-    if (url.pathname !== '/mcp') {
+    // 精确匹配 BASE_PATH，BASE_PATH 之后允许 /（MCP 客户端可能带尾斜杠或空段）
+    if (url.pathname !== BASE_PATH && url.pathname !== `${BASE_PATH}/`) {
       res.writeHead(404, { 'content-type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Not Found. Use GET/POST /mcp' }));
+      res.end(JSON.stringify({ error: `Not Found. Use GET/POST ${BASE_PATH}` }));
       return;
     }
 
@@ -68,7 +73,7 @@ async function main() {
   });
 
   httpServer.listen(PORT, () => {
-    console.log(`[findingsteel-steel-sections] Streamable HTTP listening on http://localhost:${PORT}/mcp`);
+    console.log(`[findingsteel-steel-sections] Streamable HTTP listening on http://localhost:${PORT}${BASE_PATH}`);
   });
 }
 
