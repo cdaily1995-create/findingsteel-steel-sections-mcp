@@ -1,0 +1,34 @@
+{
+  "name": "findingsteel-steel-sections-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for Chinese (GB) standard steel sections: look up section properties (A, Ix, Iy, Wx, Wy, ix, iy) and calculate theoretical weight for H-beams, I-beams, channels, angles, C/Z purlins, square/rectangular hollow sections and welded sections.",
+  "type": "module",
+  "license": "MIT",
+  "author": "FindingSteel (Jiangxin Steel Structure)",
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "bin": {
+    "findingsteel-steel-sections": "src/index.ts"
+  },
+  "main": "src/index.ts",
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "dev": "node src/index.ts",
+    "start": "node src/index.ts",
+    "serve": "node src/serve.ts",
+    "test": "node test/smoke.mjs && node test/e2e_stdio.mjs && node test/e2e_http.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "~5.8.3"
+  }
+}
