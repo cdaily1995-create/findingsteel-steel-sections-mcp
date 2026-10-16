@@ -7,14 +7,10 @@
     "source": "github"
   },
   "version": "0.1.0",
-  "packages": [
+  "remotes": [
     {
-      "registryType": "npm",
-      "identifier": "findingsteel-steel-sections-mcp",
-      "version": "0.1.0",
-      "transport": {
-        "type": "stdio"
-      }
+      "type": "streamable-http",
+      "url": "https://www.findingsteel.com/mcp/"
     }
   ]
 }
