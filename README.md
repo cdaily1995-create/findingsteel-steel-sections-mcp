@@ -1,5 +1,7 @@
 # FindingSteel Steel Sections MCP Server
 
+[![smithery badge](https://smithery.ai/badge/cdaily1995/findingsteel-steel-sections)](https://smithery.ai/servers/cdaily1995/findingsteel-steel-sections)
+
 An [MCP](https://modelcontextprotocol.io) server for **Chinese (GB standard) steel sections**: look up section properties and calculate theoretical weight for the sections used in everyday structural steelwork in China.
 
 Built by [FindingSteel](https://www.findingsteel.com/) — a steel structure manufacturer in Foshan, China — and backed by the same verified GB standard data tables used on our website.
