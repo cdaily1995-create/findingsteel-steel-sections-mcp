@@ -39243,6 +39243,67 @@ function materialsTool() {
 // src/server/index.ts
 var SERVER_NAME = "findingsteel-steel-sections";
 var SERVER_VERSION = "0.1.0";
+var readOnlyAnnotations = (title) => ({
+  title,
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: false
+});
+var unitsSchema = external_exports.object({
+  A: external_exports.string(),
+  Ix: external_exports.string(),
+  Iy: external_exports.string(),
+  Wx: external_exports.string(),
+  Wy: external_exports.string(),
+  ix: external_exports.string(),
+  iy: external_exports.string(),
+  kgPerM: external_exports.string()
+}).passthrough();
+var sectionSummarySchema = external_exports.object({
+  standard: external_exports.string(),
+  category: external_exports.string(),
+  designation: external_exports.string(),
+  dimensions: external_exports.record(external_exports.string(), external_exports.number()),
+  kgPerM: external_exports.number()
+}).passthrough();
+var sectionPropertiesSchema = external_exports.object({
+  found: external_exports.boolean(),
+  message: external_exports.string().optional(),
+  suggestion: external_exports.string().optional(),
+  standard: external_exports.string().optional(),
+  category: external_exports.string().optional(),
+  designation: external_exports.string().optional(),
+  dimensions: external_exports.record(external_exports.string(), external_exports.number()).optional(),
+  A: external_exports.number().optional(),
+  Ix: external_exports.number().optional(),
+  Iy: external_exports.number().optional(),
+  Wx: external_exports.number().optional(),
+  Wy: external_exports.number().optional(),
+  ix: external_exports.number().optional(),
+  iy: external_exports.number().optional(),
+  kgPerM: external_exports.number().optional(),
+  units: unitsSchema.optional()
+}).passthrough();
+var weldedPropertiesSchema = external_exports.object({
+  valid: external_exports.boolean(),
+  message: external_exports.string().optional(),
+  A: external_exports.number().optional(),
+  Ix: external_exports.number().optional(),
+  Iy: external_exports.number().optional(),
+  Wx: external_exports.number().optional(),
+  Wy: external_exports.number().optional(),
+  ix: external_exports.number().optional(),
+  iy: external_exports.number().optional(),
+  kgPerM: external_exports.number().optional(),
+  units: unitsSchema.optional()
+}).passthrough();
+var shapeInfoSchema = external_exports.object({
+  shape: external_exports.string(),
+  name: external_exports.string(),
+  dims: external_exports.array(external_exports.string()),
+  note: external_exports.string()
+}).passthrough();
 function createServer2() {
   const server = new McpServer({
     name: SERVER_NAME,
@@ -39254,9 +39315,20 @@ function createServer2() {
     {
       title: "List steel section categories",
       description: "\u5217\u51FA\u56FD\u6807\u578B\u94A2\u5168\u90E8\u7C7B\u522B\uFF08HW/HM/HN\u3001\u5DE5\u5B57\u94A2\u3001\u69FD\u94A2\u3001\u89D2\u94A2\u3001C/Z\u578B\u94A2\u3001\u65B9\u7BA1\u3001\u77E9\u5F62\u7BA1\uFF09\u53CA\u5E93\u5B58\u89C4\u683C\u603B\u6570\u3002List all standard section categories and total count of stored specifications.",
-      inputSchema: external_exports.object({})
+      inputSchema: external_exports.object({}),
+      outputSchema: external_exports.object({
+        categories: external_exports.array(external_exports.string()),
+        total: external_exports.number()
+      }).passthrough(),
+      annotations: readOnlyAnnotations("List steel section categories")
     },
-    async () => ({ content: [{ type: "text", text: JSON.stringify(sectionCategoriesTool(), null, 2) }] })
+    async () => {
+      const result = sectionCategoriesTool();
+      return {
+        content: [{ type: "text", text: JSON.stringify(result) }],
+        structuredContent: result
+      };
+    }
   );
   server.registerTool(
     "section_search",
@@ -39267,11 +39339,22 @@ function createServer2() {
         category: external_exports.string().optional().describe("\u7C7B\u522B\uFF0C\u5982 HN / \u5DE5\u5B57\u94A2 / \u69FD\u94A2 / \u7B49\u8FB9\u89D2\u94A2 / \u4E0D\u7B49\u8FB9\u89D2\u94A2 / C\u578B\u94A2 / Z\u578B\u94A2 / \u65B9\u7BA1 / \u77E9\u5F62\u7BA1"),
         query: external_exports.string().optional().describe("\u578B\u53F7\u6216\u6807\u51C6\u5173\u952E\u8BCD\u7247\u6BB5\uFF0C\u5982 HN400 \u6216 200\xD7200"),
         limit: external_exports.number().int().positive().max(200).optional().describe("\u8FD4\u56DE\u6761\u6570\u4E0A\u9650\uFF08\u9ED8\u8BA4 50\uFF09")
-      })
+      }),
+      outputSchema: external_exports.object({
+        total: external_exports.number(),
+        returned: external_exports.number(),
+        hint: external_exports.string().optional(),
+        sections: external_exports.array(sectionSummarySchema)
+      }).passthrough(),
+      annotations: readOnlyAnnotations("Search standard steel sections")
     },
-    async ({ category, query, limit }) => ({
-      content: [{ type: "text", text: JSON.stringify(searchSectionsTool({ category, query, limit }), null, 2) }]
-    })
+    async ({ category, query, limit }) => {
+      const result = searchSectionsTool({ category, query, limit });
+      return {
+        content: [{ type: "text", text: JSON.stringify(result) }],
+        structuredContent: result
+      };
+    }
   );
   server.registerTool(
     "section_lookup",
@@ -39280,11 +39363,17 @@ function createServer2() {
       description: "\u6309\u7CBE\u786E\u578B\u53F7\u67E5\u56FD\u6807\u578B\u94A2\u622A\u9762\u7279\u6027\uFF1AA(cm\xB2)\u3001Ix/Iy(cm\u2074)\u3001Wx/Wy(cm\xB3)\u3001ix/iy(cm)\u3001\u6BCF\u7C73\u91CD\u91CF kg/m\u3002\u578B\u53F7\u5199\u6CD5\u7528 \xD7 \u5206\u9694\uFF0C\u5982 HN400\xD7200\xD78\xD713\u3001HW250\xD7250\xD79\xD714\u3001L50\xD75\u3001C140\xD750\xD720\xD72.5\u3002Look up full section properties for an exact GB designation.",
       inputSchema: external_exports.object({
         designation: external_exports.string().describe("\u7CBE\u786E\u578B\u53F7\uFF0C\u5982 HN400\xD7200\xD78\xD713")
-      })
+      }),
+      outputSchema: sectionPropertiesSchema,
+      annotations: readOnlyAnnotations("Look up section properties by designation")
     },
-    async ({ designation }) => ({
-      content: [{ type: "text", text: JSON.stringify(sectionLookupTool({ designation }), null, 2) }]
-    })
+    async ({ designation }) => {
+      const result = sectionLookupTool({ designation });
+      return {
+        content: [{ type: "text", text: JSON.stringify(result) }],
+        structuredContent: result
+      };
+    }
   );
   server.registerTool(
     "section_welded_i",
@@ -39296,11 +39385,17 @@ function createServer2() {
         tw: external_exports.number().positive().describe("\u8179\u677F\u539A mm"),
         bf: external_exports.number().positive().describe("\u7FFC\u7F18\u5BBD mm"),
         tf: external_exports.number().positive().describe("\u7FFC\u7F18\u539A mm")
-      })
+      }),
+      outputSchema: weldedPropertiesSchema,
+      annotations: readOnlyAnnotations("Compute welded I-section properties")
     },
-    async ({ hw, tw, bf, tf }) => ({
-      content: [{ type: "text", text: JSON.stringify(weldedISectionTool({ hw, tw, bf, tf }), null, 2) }]
-    })
+    async ({ hw, tw, bf, tf }) => {
+      const result = weldedISectionTool({ hw, tw, bf, tf });
+      return {
+        content: [{ type: "text", text: JSON.stringify(result) }],
+        structuredContent: result
+      };
+    }
   );
   server.registerTool(
     "section_welded_box",
@@ -39312,11 +39407,17 @@ function createServer2() {
         b: external_exports.number().positive().describe("\u603B\u5BBD mm"),
         tw: external_exports.number().positive().describe("\u8179\u677F\u539A mm"),
         tf: external_exports.number().positive().describe("\u7FFC\u7F18\u539A mm")
-      })
+      }),
+      outputSchema: weldedPropertiesSchema,
+      annotations: readOnlyAnnotations("Compute welded box-section properties")
     },
-    async ({ h, b, tw, tf }) => ({
-      content: [{ type: "text", text: JSON.stringify(weldedBoxSectionTool({ h, b, tw, tf }), null, 2) }]
-    })
+    async ({ h, b, tw, tf }) => {
+      const result = weldedBoxSectionTool({ h, b, tw, tf });
+      return {
+        content: [{ type: "text", text: JSON.stringify(result) }],
+        structuredContent: result
+      };
+    }
   );
   server.registerTool(
     "weight_calculate",
@@ -39331,20 +39432,58 @@ function createServer2() {
         material: external_exports.string().optional().describe("\u6750\u8D28\u952E\uFF1Aq235/q355/ss304/ss316/aluminum/copper\uFF08\u9ED8\u8BA4\u78B3\u94A2 7.85\uFF09"),
         customDensity: external_exports.number().positive().optional().describe("\u81EA\u5B9A\u4E49\u5BC6\u5EA6 g/cm\xB3\uFF0C\u8986\u76D6 material"),
         designation: external_exports.string().optional().describe("shape=standard \u65F6\u7684\u56FD\u6807\u578B\u53F7\uFF0C\u5982 HN400\xD7200\xD78\xD713")
-      })
+      }),
+      outputSchema: external_exports.object({
+        valid: external_exports.boolean(),
+        shape: external_exports.string().optional(),
+        name: external_exports.string().optional(),
+        kgPerM: external_exports.number().optional(),
+        lengthM: external_exports.number().nullable().optional(),
+        quantity: external_exports.number().optional(),
+        totalKg: external_exports.number().optional(),
+        totalTons: external_exports.number().optional(),
+        note: external_exports.string().optional(),
+        densityGPerCm3: external_exports.number().optional(),
+        material: external_exports.string().optional(),
+        message: external_exports.string().optional(),
+        shapes: external_exports.array(shapeInfoSchema).optional()
+      }).passthrough(),
+      annotations: readOnlyAnnotations("Calculate steel theoretical weight")
     },
-    async (args) => ({
-      content: [{ type: "text", text: JSON.stringify(weightTool(args), null, 2) }]
-    })
+    async (args) => {
+      const result = weightTool(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result) }],
+        structuredContent: result
+      };
+    }
   );
   server.registerTool(
     "weight_materials",
     {
       title: "List material densities",
       description: "\u5217\u51FA\u5185\u7F6E\u6750\u8D28\u5BC6\u5EA6\u8868\uFF08Q235/Q355\u3001304\u3001316\u3001\u94DD\u3001\u94DC\uFF09\u4E0E\u9ED8\u8BA4\u503C\u3002List supported material densities.",
-      inputSchema: external_exports.object({})
+      inputSchema: external_exports.object({}),
+      outputSchema: external_exports.object({
+        materials: external_exports.array(
+          external_exports.object({
+            key: external_exports.string(),
+            nameZh: external_exports.string(),
+            nameEn: external_exports.string(),
+            density: external_exports.number()
+          }).passthrough()
+        ),
+        default: external_exports.string()
+      }).passthrough(),
+      annotations: readOnlyAnnotations("List material densities")
     },
-    async () => ({ content: [{ type: "text", text: JSON.stringify(materialsTool(), null, 2) }] })
+    async () => {
+      const result = materialsTool();
+      return {
+        content: [{ type: "text", text: JSON.stringify(result) }],
+        structuredContent: result
+      };
+    }
   );
   return server;
 }

@@ -21,6 +21,85 @@ import { weightTool, materialsTool } from '../tools/weight.ts';
 export const SERVER_NAME = 'findingsteel-steel-sections';
 export const SERVER_VERSION = '0.1.0';
 
+// All tools are read-only queries/calculations against static GB standard data.
+const readOnlyAnnotations = (title: string) => ({
+  title,
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: false,
+});
+
+// Shared units object returned by section-property tools.
+const unitsSchema = z
+  .object({
+    A: z.string(),
+    Ix: z.string(),
+    Iy: z.string(),
+    Wx: z.string(),
+    Wy: z.string(),
+    ix: z.string(),
+    iy: z.string(),
+    kgPerM: z.string(),
+  })
+  .passthrough();
+
+const sectionSummarySchema = z
+  .object({
+    standard: z.string(),
+    category: z.string(),
+    designation: z.string(),
+    dimensions: z.record(z.string(), z.number()),
+    kgPerM: z.number(),
+  })
+  .passthrough();
+
+const sectionPropertiesSchema = z
+  .object({
+    found: z.boolean(),
+    message: z.string().optional(),
+    suggestion: z.string().optional(),
+    standard: z.string().optional(),
+    category: z.string().optional(),
+    designation: z.string().optional(),
+    dimensions: z.record(z.string(), z.number()).optional(),
+    A: z.number().optional(),
+    Ix: z.number().optional(),
+    Iy: z.number().optional(),
+    Wx: z.number().optional(),
+    Wy: z.number().optional(),
+    ix: z.number().optional(),
+    iy: z.number().optional(),
+    kgPerM: z.number().optional(),
+    units: unitsSchema.optional(),
+  })
+  .passthrough();
+
+const weldedPropertiesSchema = z
+  .object({
+    valid: z.boolean(),
+    message: z.string().optional(),
+    A: z.number().optional(),
+    Ix: z.number().optional(),
+    Iy: z.number().optional(),
+    Wx: z.number().optional(),
+    Wy: z.number().optional(),
+    ix: z.number().optional(),
+    iy: z.number().optional(),
+    kgPerM: z.number().optional(),
+    units: unitsSchema.optional(),
+  })
+  .passthrough();
+
+const shapeInfoSchema = z
+  .object({
+    shape: z.string(),
+    name: z.string(),
+    dims: z.array(z.string()),
+    note: z.string(),
+  })
+  .passthrough();
+
 export function createServer(): McpServer {
   const server = new McpServer({
     name: SERVER_NAME,
@@ -36,8 +115,21 @@ export function createServer(): McpServer {
         '列出国标型钢全部类别（HW/HM/HN、工字钢、槽钢、角钢、C/Z型钢、方管、矩形管）及库存规格总数。' +
         'List all standard section categories and total count of stored specifications.',
       inputSchema: z.object({}),
+      outputSchema: z
+        .object({
+          categories: z.array(z.string()),
+          total: z.number(),
+        })
+        .passthrough(),
+      annotations: readOnlyAnnotations('List steel section categories'),
     },
-    async () => ({ content: [{ type: 'text' as const, text: JSON.stringify(sectionCategoriesTool(), null, 2) }] }),
+    async () => {
+      const result = sectionCategoriesTool();
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(result) }],
+        structuredContent: result as never,
+      };
+    },
   );
 
   server.registerTool(
@@ -53,10 +145,23 @@ export function createServer(): McpServer {
         query: z.string().optional().describe('型号或标准关键词片段，如 HN400 或 200×200'),
         limit: z.number().int().positive().max(200).optional().describe('返回条数上限（默认 50）'),
       }),
+      outputSchema: z
+        .object({
+          total: z.number(),
+          returned: z.number(),
+          hint: z.string().optional(),
+          sections: z.array(sectionSummarySchema),
+        })
+        .passthrough(),
+      annotations: readOnlyAnnotations('Search standard steel sections'),
     },
-    async ({ category, query, limit }) => ({
-      content: [{ type: 'text' as const, text: JSON.stringify(searchSectionsTool({ category, query, limit }), null, 2) }],
-    }),
+    async ({ category, query, limit }) => {
+      const result = searchSectionsTool({ category, query, limit });
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(result) }],
+        structuredContent: result as never,
+      };
+    },
   );
 
   server.registerTool(
@@ -70,10 +175,16 @@ export function createServer(): McpServer {
       inputSchema: z.object({
         designation: z.string().describe('精确型号，如 HN400×200×8×13'),
       }),
+      outputSchema: sectionPropertiesSchema,
+      annotations: readOnlyAnnotations('Look up section properties by designation'),
     },
-    async ({ designation }) => ({
-      content: [{ type: 'text' as const, text: JSON.stringify(sectionLookupTool({ designation }), null, 2) }],
-    }),
+    async ({ designation }) => {
+      const result = sectionLookupTool({ designation });
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(result) }],
+        structuredContent: result as never,
+      };
+    },
   );
 
   server.registerTool(
@@ -89,10 +200,16 @@ export function createServer(): McpServer {
         bf: z.number().positive().describe('翼缘宽 mm'),
         tf: z.number().positive().describe('翼缘厚 mm'),
       }),
+      outputSchema: weldedPropertiesSchema,
+      annotations: readOnlyAnnotations('Compute welded I-section properties'),
     },
-    async ({ hw, tw, bf, tf }) => ({
-      content: [{ type: 'text' as const, text: JSON.stringify(weldedISectionTool({ hw, tw, bf, tf }), null, 2) }],
-    }),
+    async ({ hw, tw, bf, tf }) => {
+      const result = weldedISectionTool({ hw, tw, bf, tf });
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(result) }],
+        structuredContent: result as never,
+      };
+    },
   );
 
   server.registerTool(
@@ -108,10 +225,16 @@ export function createServer(): McpServer {
         tw: z.number().positive().describe('腹板厚 mm'),
         tf: z.number().positive().describe('翼缘厚 mm'),
       }),
+      outputSchema: weldedPropertiesSchema,
+      annotations: readOnlyAnnotations('Compute welded box-section properties'),
     },
-    async ({ h, b, tw, tf }) => ({
-      content: [{ type: 'text' as const, text: JSON.stringify(weldedBoxSectionTool({ h, b, tw, tf }), null, 2) }],
-    }),
+    async ({ h, b, tw, tf }) => {
+      const result = weldedBoxSectionTool({ h, b, tw, tf });
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(result) }],
+        structuredContent: result as never,
+      };
+    },
   );
 
   server.registerTool(
@@ -132,10 +255,32 @@ export function createServer(): McpServer {
         customDensity: z.number().positive().optional().describe('自定义密度 g/cm³，覆盖 material'),
         designation: z.string().optional().describe('shape=standard 时的国标型号，如 HN400×200×8×13'),
       }),
+      outputSchema: z
+        .object({
+          valid: z.boolean(),
+          shape: z.string().optional(),
+          name: z.string().optional(),
+          kgPerM: z.number().optional(),
+          lengthM: z.number().nullable().optional(),
+          quantity: z.number().optional(),
+          totalKg: z.number().optional(),
+          totalTons: z.number().optional(),
+          note: z.string().optional(),
+          densityGPerCm3: z.number().optional(),
+          material: z.string().optional(),
+          message: z.string().optional(),
+          shapes: z.array(shapeInfoSchema).optional(),
+        })
+        .passthrough(),
+      annotations: readOnlyAnnotations('Calculate steel theoretical weight'),
     },
-    async (args) => ({
-      content: [{ type: 'text' as const, text: JSON.stringify(weightTool(args as never), null, 2) }],
-    }),
+    async (args) => {
+      const result = weightTool(args as never);
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(result) }],
+        structuredContent: result as never,
+      };
+    },
   );
 
   server.registerTool(
@@ -144,11 +289,31 @@ export function createServer(): McpServer {
       title: 'List material densities',
       description: '列出内置材质密度表（Q235/Q355、304、316、铝、铜）与默认值。List supported material densities.',
       inputSchema: z.object({}),
+      outputSchema: z
+        .object({
+          materials: z.array(
+            z
+              .object({
+                key: z.string(),
+                nameZh: z.string(),
+                nameEn: z.string(),
+                density: z.number(),
+              })
+              .passthrough(),
+          ),
+          default: z.string(),
+        })
+        .passthrough(),
+      annotations: readOnlyAnnotations('List material densities'),
     },
-    async () => ({ content: [{ type: 'text' as const, text: JSON.stringify(materialsTool(), null, 2) }] }),
+    async () => {
+      const result = materialsTool();
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(result) }],
+        structuredContent: result as never,
+      };
+    },
   );
 
   return server;
 }
-
-
