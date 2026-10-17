@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "findingsteel-steel-sections": {
+      "type": "http",
+      "url": "https://www.findingsteel.com/mcp/"
+    }
+  }
+}
