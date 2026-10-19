@@ -27,13 +27,14 @@ Built by [FindingSteel](https://www.findingsteel.com/en/) — a steel structure 
 
 ```bash
 # stdio transport (recommended for local clients)
-git clone https://github.com/FindingSteel/findingsteel-steel-sections-mcp.git
+git clone https://github.com/cdaily1995-create/findingsteel-steel-sections-mcp.git
 cd findingsteel-steel-sections-mcp
 npm install
-node src/index.ts
+npm run build
+node dist/index.js
 
 # or without cloning:
-npx -y github:FindingSteel/findingsteel-steel-sections-mcp
+npx -y findingsteel-steel-sections-mcp
 ```
 
 ### Example client config (Claude Desktop)
