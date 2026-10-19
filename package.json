@@ -1,6 +1,6 @@
 {
   "name": "findingsteel-steel-sections-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP server for Chinese (GB) standard steel sections: look up section properties (A, Ix, Iy, Wx, Wy, ix, iy) and calculate theoretical weight for H-beams, I-beams, channels, angles, C/Z purlins, square/rectangular hollow sections and welded sections.",
   "type": "module",
   "license": "MIT",
