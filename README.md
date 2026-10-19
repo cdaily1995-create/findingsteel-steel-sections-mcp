@@ -92,8 +92,7 @@ weight_calculate { "shape": "pipe", "dims": { "D": 168, "t": 6 }, "lengthM": 12 
 - **GB/T 6728-2017** cold-formed square and rectangular hollow sections
 - Theoretical weight formulas from the corresponding GB standards; density constants from common engineering handbooks.
 
-The same data powers the online calculators on [findingsteel.com/tools/steel-weight-calculator](https://www.findingsteel.com/en/tools/steel-weight-calculator) and [findingsteel.com/tools/section-properties](https://www.findingsteel.com/en/tools/section-properties).
-
+The same data powers our online [steel weight calculator](https://www.findingsteel.com/en/tools/steel-weight-calculator/) and [steel section properties calculator](https://www.findingsteel.com/en/tools/section-properties/) tools.
 ## Development
 
 ```bash
