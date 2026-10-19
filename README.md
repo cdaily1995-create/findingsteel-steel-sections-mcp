@@ -4,7 +4,7 @@
 
 An [MCP](https://modelcontextprotocol.io) server for **Chinese (GB standard) steel sections**: look up section properties and calculate theoretical weight for the sections used in everyday structural steelwork in China.
 
-Built by [FindingSteel](https://www.findingsteel.com/) — a steel structure manufacturer in Foshan, China — and backed by the same verified GB standard data tables used on our website.
+Built by [FindingSteel](https://www.findingsteel.com/en/) — a steel structure manufacturer in Foshan, China — and backed by the same verified GB standard data tables used on our website.
 
 ## Why this is useful
 
@@ -92,7 +92,7 @@ weight_calculate { "shape": "pipe", "dims": { "D": 168, "t": 6 }, "lengthM": 12 
 - **GB/T 6728-2017** cold-formed square and rectangular hollow sections
 - Theoretical weight formulas from the corresponding GB standards; density constants from common engineering handbooks.
 
-The same data powers the online calculators on [findingsteel.com/tools/steel-weight-calculator](https://www.findingsteel.com/tools/steel-weight-calculator) and [findingsteel.com/tools/section-properties](https://www.findingsteel.com/tools/section-properties).
+The same data powers the online calculators on [findingsteel.com/tools/steel-weight-calculator](https://www.findingsteel.com/en/tools/steel-weight-calculator) and [findingsteel.com/tools/section-properties](https://www.findingsteel.com/en/tools/section-properties).
 
 ## Development
 
