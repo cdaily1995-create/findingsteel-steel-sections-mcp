@@ -1,6 +1,6 @@
 # FindingSteel Steel Sections MCP Server
 
-[![smithery badge](https://smithery.ai/badge/cdaily1995/findingsteel-steel-sections)](https://smithery.ai/servers/cdaily1995/findingsteel-steel-sections)
+[![LightNow capabilities](https://lightnow.ai/badge/io.github.cdaily1995-create/findingsteel-steel-sections)](https://lightnow.ai/servers/io.github.cdaily1995-create/findingsteel-steel-sections)
 
 An [MCP](https://modelcontextprotocol.io) server for **Chinese (GB standard) steel sections**: look up section properties and calculate theoretical weight for the sections used in everyday structural steelwork in China.
 
